@@ -1,1 +1,897 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>おじ競馬メソッド</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --accent: #38bdf8;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --line: #334155;
+      --danger: #f87171;
+      --ok: #34d399;
+      --warn: #fbbf24;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      -webkit-text-size-adjust: 100%;
+    }
+    .app {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 14px 14px 90px;
+    }
+    .screen { display: none; }
+    .screen.active { display: block; }
+    .title { font-size: 24px; margin: 6px 0 10px; font-weight: 700; }
+    .subtitle { color: var(--muted); margin: 0 0 14px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .section-title { font-size: 16px; margin: 0 0 8px; }
+    .muted { color: var(--muted); }
+    .row { display: flex; gap: 8px; align-items: center; }
+    .row.wrap { flex-wrap: wrap; }
+    .row.between { justify-content: space-between; }
+    .stack > * + * { margin-top: 8px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    input, select, textarea, button {
+      width: 100%;
+      font-size: 16px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: #0b1222;
+      color: var(--text);
+      padding: 10px;
+    }
+    textarea { min-height: 78px; resize: vertical; }
+    button { background: #17243b; cursor: pointer; }
+    button.primary { background: #0c4a6e; border-color: #0369a1; }
+    button.accent { background: var(--accent); color: #052235; border-color: #7dd3fc; font-weight: 700; }
+    button.danger { background: #4c1d1d; border-color: #7f1d1d; color: #fecaca; }
+    .small-btn { width: auto; min-width: 76px; padding: 9px 10px; }
+    .badge {
+      display: inline-block;
+      border: 1px solid var(--line);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 3px 10px;
+      font-size: 12px;
+      background: #111c2f;
+    }
+    .list-item {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px;
+      margin-top: 8px;
+      background: #162338;
+    }
+    .kv { display: grid; grid-template-columns: 130px 1fr; gap: 6px 8px; font-size: 14px; }
+    .kv div:nth-child(odd) { color: var(--muted); }
+    .flow { display: flex; gap: 6px; flex-wrap: wrap; }
+    .flow span { font-size: 12px; padding: 6px 9px; border: 1px solid var(--line); border-radius: 999px; background: #132238; }
+    .bottom-nav {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(15, 23, 42, 0.97);
+      border-top: 1px solid var(--line);
+      padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+      z-index: 99;
+    }
+    .bottom-nav .row { max-width: 760px; margin: 0 auto; }
+    .bottom-nav button { min-height: 46px; }
+    .progress-wrap { margin-top: 8px; }
+    .progress-track { display: flex; gap: 5px; }
+    .progress-seg {
+      flex: 1;
+      text-align: center;
+      font-size: 10px;
+      border-radius: 10px;
+      padding: 6px 4px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      background: #121f33;
+    }
+    .progress-seg.done { background: #083344; color: #67e8f9; border-color: #155e75; }
+    .progress-seg.current { background: #0c4a6e; color: #e0f2fe; border-color: #38bdf8; }
+    .progress-seg.todo { opacity: .75; }
+    .collapse-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      user-select: none;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .collapse-head button { width: auto; }
+    .hidden { display: none; }
+    .horse-row { border: 1px solid var(--line); border-radius: 10px; padding: 8px; margin-top: 8px; background: #0f1b2f; }
+    .pill { font-size: 12px; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--line); }
+    .pill.ok { color: #6ee7b7; border-color: #065f46; }
+    .pill.cut { color: #fca5a5; border-color: #7f1d1d; }
+    .pill.hold { color: #fde68a; border-color: #854d0e; }
+    .rank-table { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 13px; }
+    .rank-table th,.rank-table td { border-bottom: 1px solid var(--line); padding: 7px 5px; text-align: left; }
+    .rank-table th { color: var(--muted); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section id="screen-home" class="screen"></section>
+    <section id="screen-list" class="screen"></section>
+    <section id="screen-detail" class="screen"></section>
+    <section id="screen-workflow" class="screen"></section>
+  </div>
 
+  <nav class="bottom-nav">
+    <div class="row">
+      <button id="nav-home" class="small-btn">HOME</button>
+      <button id="nav-list" class="small-btn">RACE LIST</button>
+      <button id="nav-detail" class="small-btn">DETAIL</button>
+      <button id="nav-workflow" class="small-btn">WORKFLOW</button>
+    </div>
+  </nav>
+
+  <script>
+    'use strict';
+
+    var STORAGE_KEY = 'oji-keiba-workflow-v1';
+    var currentScreen = 'home';
+    var collapsedSteps = { step0:false, step1:false, step2:false, step3:false, step4:false, step5:false, step6:false };
+
+    var statusJa = {
+      'new':'新規',
+      'step0_done':'STEP0完了',
+      'step1_done':'STEP1完了',
+      'step2_done':'STEP2完了',
+      'step3_done':'STEP3完了',
+      'step4_done':'STEP4判断済',
+      'bet_done':'購入済',
+      'result_wait':'結果待ち',
+      'review_done':'振り返り完了'
+    };
+
+    var appState = {
+      currentRaceId: 'race-001',
+      races: []
+    };
+
+    function defaultRace(id, raceName, date, venue, distance, surface, trackCondition, fieldSize, favoriteHorse) {
+      return {
+        id: id,
+        raceName: raceName,
+        date: date,
+        venue: venue,
+        distance: distance,
+        surface: surface,
+        trackCondition: trackCondition,
+        fieldSize: fieldSize,
+        status: 'new',
+        favoriteHorse: favoriteHorse || '',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        step0: { frontRunnerCount: '', trackBiasMemo: '', noteMemo: '', autoRaceType: '', raceTypeManual: '' },
+        step1: { horses: [] },
+        step2: { horses: [], ranking: [] },
+        step3: { finalists: [], nextCandidate: '', nextReason: '' },
+        step4: { decision: '', reason: '' },
+        step5: { ticketType: '複勝', horseName: '', amount: 500, note: '' },
+        step6: { result: '', worked: '', failed: '', betEvaluation: '', nextMemo: '' }
+      };
+    }
+
+    function buildInitialState() {
+      var r1 = defaultRace('race-001', '桜花賞 2026', '2026-04-12', '阪神', 1600, '芝', '良', 18, 'フェスティバルヒル');
+      r1.step0.frontRunnerCount = 2;
+      r1.step0.autoRaceType = '平均';
+      r1.step1.horses = [
+        { horseName:'フェスティバルヒル', judge:'通過', reason:'距離適性高い' },
+        { horseName:'ブルーミングレーン', judge:'通過', reason:'末脚安定' },
+        { horseName:'サンライズリリー', judge:'保留', reason:'馬場次第' }
+      ];
+      r1.step2.horses = [
+        { horseName:'フェスティバルヒル', courseMark:'◎', paceMark:'○', jockeyMark:'○', comment:'軸候補' },
+        { horseName:'ブルーミングレーン', courseMark:'○', paceMark:'◎', jockeyMark:'△', comment:'差し警戒' },
+        { horseName:'サンライズリリー', courseMark:'△', paceMark:'○', jockeyMark:'△', comment:'抑え' }
+      ];
+      var r2 = defaultRace('race-002', '皐月賞 2026', '2026-04-19', '中山', 2000, '芝', '良', 18, 'グランドステップ');
+      var r3 = defaultRace('race-003', '中山ダ1800 2026/04/05 10R', '2026-04-05', '中山', 1800, 'ダート', '稍重', 16, 'アドマイヤバンク');
+      r3.step4.decision = '見送り';
+      r3.step4.reason = '上位評価が拮抗';
+      return { currentRaceId: 'race-001', races: [r1, r2, r3] };
+    }
+
+    function saveAppState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+    }
+
+    function loadAppState() {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) {
+        appState = buildInitialState();
+        appState.races.forEach(function(r){ calculateStep2Scores(r); calculateStep3Finalists(r); updateRaceStatus(r); });
+        saveAppState();
+        return;
+      }
+      try {
+        var parsed = JSON.parse(raw);
+        if (!parsed || !Array.isArray(parsed.races) || parsed.races.length === 0) throw new Error('bad state');
+        appState = parsed;
+      } catch (e) {
+        appState = buildInitialState();
+      }
+      appState.races.forEach(function(r){
+        if (!r.step0) r.step0 = { frontRunnerCount:'', trackBiasMemo:'', noteMemo:'', autoRaceType:'', raceTypeManual:'' };
+        if (!r.step1) r.step1 = { horses:[] };
+        if (!r.step2) r.step2 = { horses:[], ranking:[] };
+        if (!r.step3) r.step3 = { finalists:[], nextCandidate:'', nextReason:'' };
+        if (!r.step4) r.step4 = { decision:'', reason:'' };
+        if (!r.step5) r.step5 = { ticketType:'複勝', horseName:'', amount:500, note:'' };
+        if (!r.step6) r.step6 = { result:'', worked:'', failed:'', betEvaluation:'', nextMemo:'' };
+        calculateStep2Scores(r);
+        calculateStep3Finalists(r);
+        updateRaceStatus(r);
+      });
+      if (!getRaceById(appState.currentRaceId)) {
+        appState.currentRaceId = appState.races[0].id;
+      }
+      saveAppState();
+    }
+
+    function getRaceById(id) {
+      return appState.races.find(function(r){ return r.id === id; }) || null;
+    }
+
+    function selectRace(raceId) {
+      if (!getRaceById(raceId)) return;
+      appState.currentRaceId = raceId;
+      saveAppState();
+    }
+
+    function createRace() {
+      var name = document.getElementById('new-race-name').value.trim();
+      var date = document.getElementById('new-race-date').value;
+      var venue = document.getElementById('new-race-venue').value.trim();
+      var distance = Number(document.getElementById('new-race-distance').value || 0);
+      var surface = document.getElementById('new-race-surface').value;
+      var trackCondition = document.getElementById('new-race-track').value;
+      var fieldSize = Number(document.getElementById('new-race-field').value || 0);
+      var favoriteHorse = document.getElementById('new-race-fav').value.trim();
+      if (!name || !date || !venue || !distance || !fieldSize) return;
+      var id = 'race-' + Date.now();
+      var race = defaultRace(id, name, date, venue, distance, surface, trackCondition, fieldSize, favoriteHorse);
+      appState.races.unshift(race);
+      appState.currentRaceId = id;
+      saveAppState();
+      renderRaceList();
+    }
+
+    function deleteRace(raceId) {
+      if (appState.races.length === 1) return;
+      appState.races = appState.races.filter(function(r){ return r.id !== raceId; });
+      if (!getRaceById(appState.currentRaceId)) appState.currentRaceId = appState.races[0].id;
+      saveAppState();
+      if (currentScreen === 'detail') showRaceDetail(appState.currentRaceId);
+      else if (currentScreen === 'workflow') showWorkflow(appState.currentRaceId);
+      else renderRaceList();
+    }
+
+    function duplicateRace(raceId) {
+      var base = getRaceById(raceId);
+      if (!base) return;
+      var copy = JSON.parse(JSON.stringify(base));
+      copy.id = 'race-' + Date.now();
+      copy.raceName = base.raceName + ' (複製)';
+      copy.createdAt = Date.now();
+      copy.updatedAt = Date.now();
+      appState.races.unshift(copy);
+      appState.currentRaceId = copy.id;
+      saveAppState();
+      renderRaceList();
+    }
+
+    function markToScore(mark) {
+      if (mark === '◎') return 2;
+      if (mark === '○') return 1;
+      if (mark === '△') return 0;
+      if (mark === '×') return -1;
+      return 0;
+    }
+
+    function calculateStep2Scores(race) {
+      var horses = (race.step2 && Array.isArray(race.step2.horses)) ? race.step2.horses : [];
+      race.step2.ranking = horses.map(function(h, i){
+        var courseScore = markToScore(h.courseMark);
+        var paceScore = markToScore(h.paceMark);
+        var jockeyScore = markToScore(h.jockeyMark);
+        var totalScore = courseScore + paceScore + jockeyScore;
+        return {
+          horseName: h.horseName || ('馬' + (i+1)),
+          courseMark: h.courseMark || '△',
+          paceMark: h.paceMark || '△',
+          jockeyMark: h.jockeyMark || '△',
+          comment: h.comment || '',
+          courseScore: courseScore,
+          paceScore: paceScore,
+          jockeyScore: jockeyScore,
+          totalScore: totalScore,
+          stableOrder: i
+        };
+      }).sort(function(a,b){
+        if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore;
+        if (b.courseScore !== a.courseScore) return b.courseScore - a.courseScore;
+        if (b.paceScore !== a.paceScore) return b.paceScore - a.paceScore;
+        if (b.jockeyScore !== a.jockeyScore) return b.jockeyScore - a.jockeyScore;
+        return a.stableOrder - b.stableOrder;
+      }).map(function(item, index){
+        item.rank = index + 1;
+        return item;
+      });
+    }
+
+    function calculateStep3Finalists(race) {
+      calculateStep2Scores(race);
+      var ranking = race.step2.ranking || [];
+      var finalists = ranking.slice(0,3).map(function(r){ return r.horseName; });
+      race.step3.finalists = finalists;
+      var next = ranking[3];
+      race.step3.nextCandidate = next ? next.horseName : '';
+      race.step3.nextReason = next ? ('次点: 総合' + next.totalScore + ' / コース' + next.courseScore + ' / 流れ' + next.paceScore + ' / 騎手' + next.jockeyScore) : '';
+    }
+
+    function autoRaceTypeByCount(count) {
+      if (count === '' || count === null || typeof count === 'undefined') return '';
+      var n = Number(count);
+      if (Number.isNaN(n)) return '';
+      if (n <= 1) return 'スロー';
+      if (n <= 3) return '平均';
+      return 'ハイ';
+    }
+
+    function updateRaceStatus(race) {
+      var s0 = !!(race.step0 && (race.step0.raceTypeManual || race.step0.autoRaceType));
+      var s1 = !!(race.step1 && race.step1.horses && race.step1.horses.some(function(h){ return h.horseName; }));
+      var s2 = !!(race.step2 && race.step2.horses && race.step2.horses.some(function(h){ return h.horseName; }));
+      var s3 = !!(race.step3 && race.step3.finalists && race.step3.finalists.length > 0);
+      var s4 = !!(race.step4 && race.step4.decision);
+      var s5 = !!(race.step5 && race.step5.ticketType && race.step5.horseName && Number(race.step5.amount) > 0);
+      var s6 = !!(race.step6 && race.step6.result && race.step6.betEvaluation);
+
+      if (s6) race.status = 'review_done';
+      else if (s5) {
+        race.status = (race.step6 && race.step6.result) ? 'review_done' : 'result_wait';
+      } else if (s4) {
+        if (race.step4.decision === '買う') race.status = 'step4_done';
+        else race.status = 'step4_done';
+      } else if (s3) race.status = 'step3_done';
+      else if (s2) race.status = 'step2_done';
+      else if (s1) race.status = 'step1_done';
+      else if (s0) race.status = 'step0_done';
+      else race.status = 'new';
+
+      if (s4 && race.step4.decision === '買う' && s5) race.status = 'bet_done';
+      if (s5 && !s6) race.status = 'result_wait';
+      if (s6) race.status = 'review_done';
+
+      race.updatedAt = Date.now();
+    }
+
+    function updateProgress(race) {
+      updateRaceStatus(race);
+      var map = ['new','step0_done','step1_done','step2_done','step3_done','step4_done','bet_done','result_wait','review_done'];
+      var idx = map.indexOf(race.status);
+      if (idx < 0) idx = 0;
+      var currentStep = 0;
+      if (race.status === 'new') currentStep = 0;
+      else if (race.status === 'step0_done') currentStep = 1;
+      else if (race.status === 'step1_done') currentStep = 2;
+      else if (race.status === 'step2_done') currentStep = 3;
+      else if (race.status === 'step3_done') currentStep = 4;
+      else if (race.status === 'step4_done') currentStep = 5;
+      else if (race.status === 'bet_done') currentStep = 6;
+      else if (race.status === 'result_wait') currentStep = 6;
+      else currentStep = 7;
+
+      return {
+        currentStep: currentStep,
+        labels: ['STEP0','STEP1','STEP2','STEP3','STEP4','STEP5','STEP6']
+      };
+    }
+
+    function hideAllScreens() {
+      ['screen-home','screen-list','screen-detail','screen-workflow'].forEach(function(id){
+        document.getElementById(id).classList.remove('active');
+      });
+    }
+
+    function showHome() {
+      currentScreen = 'home';
+      hideAllScreens();
+      document.getElementById('screen-home').classList.add('active');
+      renderHome();
+    }
+
+    function showRaceList() {
+      currentScreen = 'list';
+      hideAllScreens();
+      document.getElementById('screen-list').classList.add('active');
+      renderRaceList();
+    }
+
+    function showRaceDetail(raceId) {
+      if (raceId) selectRace(raceId);
+      currentScreen = 'detail';
+      hideAllScreens();
+      document.getElementById('screen-detail').classList.add('active');
+      renderRaceDetail();
+    }
+
+    function showWorkflow(raceId) {
+      if (raceId) selectRace(raceId);
+      currentScreen = 'workflow';
+      hideAllScreens();
+      document.getElementById('screen-workflow').classList.add('active');
+      renderWorkflow();
+    }
+
+    function statusBadge(status) {
+      return '<span class="badge">' + (statusJa[status] || status) + '</span>';
+    }
+
+    function renderHome() {
+      var el = document.getElementById('screen-home');
+      var upcoming = appState.races.slice().sort(function(a,b){ return new Date(a.date)-new Date(b.date); }).slice(0,5);
+      var reviews = appState.races.filter(function(r){ return r.step6 && r.step6.result; }).sort(function(a,b){ return b.updatedAt-a.updatedAt; }).slice(0,3);
+      el.innerHTML = '' +
+        '<h1 class="title">おじ競馬メソッド</h1>' +
+        '<p class="subtitle">削る → 比較 → 絞る → 判断 → 振り返る</p>' +
+        '<div class="card"><h2 class="section-title">ベッティングルール</h2><div class="stack"><div>複勝1点</div><div>500円</div><div>迷ったら見送り</div></div></div>' +
+        '<div class="card"><h2 class="section-title">メソッドフロー</h2><div class="flow"><span>STEP0 Race Type</span><span>STEP1 Elimination</span><span>STEP2 Evaluation</span><span>STEP3 Convergence</span><span>STEP4 Decision</span><span>STEP5 Bet</span><span>STEP6 Review</span></div></div>' +
+        '<div class="card"><h2 class="section-title">Upcoming Races</h2><div id="upcoming-list"></div></div>' +
+        '<div class="card"><h2 class="section-title">Recent 3 Reviews</h2><div id="recent-review-list"></div></div>';
+
+      var up = document.getElementById('upcoming-list');
+      if (!upcoming.length) up.innerHTML = '<div class="muted">レースがありません。</div>';
+      upcoming.forEach(function(r){
+        var card = document.createElement('div');
+        card.className = 'list-item';
+        card.innerHTML = '<div class="row between"><strong>' + escapeHtml(r.raceName) + '</strong>' + statusBadge(r.status) + '</div>' +
+          '<div class="muted">' + escapeHtml(r.date) + ' / ' + escapeHtml(r.venue + ' ' + r.surface + r.distance) + '</div>' +
+          '<div class="muted">本命: ' + escapeHtml(r.favoriteHorse || '-') + '</div>' +
+          '<div class="row" style="margin-top:8px;"><button class="primary" data-open-detail="' + r.id + '">詳細</button><button data-open-workflow="' + r.id + '">ワークフロー</button></div>';
+        up.appendChild(card);
+      });
+
+      var rr = document.getElementById('recent-review-list');
+      if (!reviews.length) rr.innerHTML = '<div class="muted">レビュー記録がまだありません。</div>';
+      reviews.forEach(function(r){
+        var c = document.createElement('div');
+        c.className = 'list-item';
+        c.innerHTML = '<strong>' + escapeHtml(r.raceName) + '</strong>' +
+          '<div class="muted">結果: ' + escapeHtml(r.step6.result || '-') + '</div>' +
+          '<div class="muted">評価: ' + escapeHtml(r.step6.betEvaluation || '-') + '</div>';
+        rr.appendChild(c);
+      });
+
+      bindCommonButtons(el);
+    }
+
+    function renderRaceList() {
+      var el = document.getElementById('screen-list');
+      var itemsHtml = appState.races.map(function(r){
+        return '<div class="card">' +
+          '<div class="row between"><strong>' + escapeHtml(r.raceName) + '</strong>' + statusBadge(r.status) + '</div>' +
+          '<div class="muted" style="margin-top:4px;">' + escapeHtml(r.date) + ' / ' + escapeHtml(r.venue + ' ' + r.surface + r.distance) + 'm / 頭数' + escapeHtml(String(r.fieldSize)) + '</div>' +
+          '<div class="muted">本命: ' + escapeHtml(r.favoriteHorse || '-') + '</div>' +
+          '<div class="grid-2" style="margin-top:9px;">' +
+            '<button data-open-detail="' + r.id + '">Open Detail</button>' +
+            '<button data-open-workflow="' + r.id + '">Open Workflow</button>' +
+            '<button data-dup="' + r.id + '">Duplicate</button>' +
+            '<button class="danger" data-del="' + r.id + '">Delete</button>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+
+      el.innerHTML = '' +
+        '<h1 class="title">RACE LIST</h1>' +
+        '<div class="card"><h2 class="section-title">新規レース作成</h2>' +
+          '<div class="stack">' +
+            '<input id="new-race-name" placeholder="レース名" />' +
+            '<div class="grid-2"><input id="new-race-date" type="date" /><input id="new-race-venue" placeholder="開催場" /></div>' +
+            '<div class="grid-2"><input id="new-race-distance" type="number" placeholder="距離(m)" /><select id="new-race-surface"><option>芝</option><option>ダート</option><option>障害</option></select></div>' +
+            '<div class="grid-2"><select id="new-race-track"><option>良</option><option>稍重</option><option>重</option><option>不良</option></select><input id="new-race-field" type="number" placeholder="頭数" /></div>' +
+            '<input id="new-race-fav" placeholder="想定人気馬" />' +
+            '<button id="create-race-btn" class="accent">Create Race</button>' +
+          '</div>' +
+        '</div>' +
+        '<div id="race-list-cards">' + itemsHtml + '</div>';
+
+      document.getElementById('create-race-btn').addEventListener('click', createRace);
+      bindCommonButtons(el);
+
+      el.querySelectorAll('[data-del]').forEach(function(btn){
+        btn.addEventListener('click', function(){ deleteRace(btn.getAttribute('data-del')); });
+      });
+      el.querySelectorAll('[data-dup]').forEach(function(btn){
+        btn.addEventListener('click', function(){ duplicateRace(btn.getAttribute('data-dup')); });
+      });
+    }
+
+    function renderRaceDetail() {
+      var race = getRaceById(appState.currentRaceId);
+      if (!race) return;
+      calculateStep2Scores(race);
+      calculateStep3Finalists(race);
+      updateRaceStatus(race);
+      saveAppState();
+
+      var selectedRaceType = race.step0.raceTypeManual || race.step0.autoRaceType || '-';
+      var passCount = (race.step1.horses || []).filter(function(h){ return h.judge === '通過'; }).length;
+      var finalists = (race.step3.finalists || []).join(', ') || '-';
+      var decision = race.step4.decision || '-';
+      var bet = race.step5.horseName ? (race.step5.ticketType + ' ' + race.step5.horseName + ' ' + race.step5.amount + '円') : '-';
+      var reviewState = race.step6.result ? '記録済' : '未記録';
+
+      var el = document.getElementById('screen-detail');
+      el.innerHTML = '' +
+        '<h1 class="title">RACE DETAIL</h1>' +
+        '<div class="card"><div class="row between"><strong>' + escapeHtml(race.raceName) + '</strong>' + statusBadge(race.status) + '</div>' +
+          '<div class="kv" style="margin-top:8px;">' +
+            '<div>開催日</div><div>' + escapeHtml(race.date) + '</div>' +
+            '<div>開催場</div><div>' + escapeHtml(race.venue) + '</div>' +
+            '<div>距離</div><div>' + escapeHtml(String(race.distance)) + 'm</div>' +
+            '<div>馬場種別</div><div>' + escapeHtml(race.surface) + '</div>' +
+            '<div>馬場状態</div><div>' + escapeHtml(race.trackCondition) + '</div>' +
+            '<div>頭数</div><div>' + escapeHtml(String(race.fieldSize)) + '</div>' +
+            '<div>ステータス</div><div>' + escapeHtml(statusJa[race.status] || race.status) + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="card"><h2 class="section-title">サマリー</h2>' +
+          '<div class="kv">' +
+            '<div>レースタイプ</div><div>' + escapeHtml(selectedRaceType) + '</div>' +
+            '<div>STEP1 通過数</div><div>' + passCount + '</div>' +
+            '<div>ファイナリスト</div><div>' + escapeHtml(finalists) + '</div>' +
+            '<div>判断</div><div>' + escapeHtml(decision) + '</div>' +
+            '<div>馬券</div><div>' + escapeHtml(bet) + '</div>' +
+            '<div>レビュー</div><div>' + escapeHtml(reviewState) + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="grid-3">' +
+          '<button id="detail-to-workflow" class="accent">Go to Workflow</button>' +
+          '<button id="detail-to-home">Back to Home</button>' +
+          '<button id="detail-to-list">Back to List</button>' +
+        '</div>';
+
+      document.getElementById('detail-to-workflow').addEventListener('click', function(){ showWorkflow(race.id); });
+      document.getElementById('detail-to-home').addEventListener('click', showHome);
+      document.getElementById('detail-to-list').addEventListener('click', showRaceList);
+    }
+
+    function addStep1Horse() {
+      var race = getRaceById(appState.currentRaceId);
+      if (!race) return;
+      race.step1.horses.push({ horseName:'', judge:'保留', reason:'' });
+      updateRaceStatus(race);
+      saveAppState();
+      renderWorkflow();
+    }
+
+    function removeStep1Horse(index) {
+      var race = getRaceById(appState.currentRaceId);
+      if (!race) return;
+      race.step1.horses.splice(index, 1);
+      updateRaceStatus(race);
+      saveAppState();
+      renderWorkflow();
+    }
+
+    function addStep2Horse() {
+      var race = getRaceById(appState.currentRaceId);
+      if (!race) return;
+      race.step2.horses.push({ horseName:'', courseMark:'△', paceMark:'△', jockeyMark:'△', comment:'' });
+      calculateStep2Scores(race);
+      calculateStep3Finalists(race);
+      updateRaceStatus(race);
+      saveAppState();
+      renderWorkflow();
+    }
+
+    function removeStep2Horse(index) {
+      var race = getRaceById(appState.currentRaceId);
+      if (!race) return;
+      race.step2.horses.splice(index, 1);
+      calculateStep2Scores(race);
+      calculateStep3Finalists(race);
+      updateRaceStatus(race);
+      saveAppState();
+      renderWorkflow();
+    }
+
+    function buildProgressBarHtml(race) {
+      var p = updateProgress(race);
+      var out = '<div class="progress-wrap"><div class="progress-track">';
+      p.labels.forEach(function(label, i){
+        var cls = 'progress-seg todo';
+        if (i < p.currentStep) cls = 'progress-seg done';
+        if (i === p.currentStep && p.currentStep < 7) cls = 'progress-seg current';
+        if (p.currentStep === 7) cls = 'progress-seg done';
+        out += '<div class="' + cls + '">' + label + '</div>';
+      });
+      out += '</div></div>';
+      return out;
+    }
+
+    function renderWorkflow() {
+      var race = getRaceById(appState.currentRaceId);
+      if (!race) return;
+      calculateStep2Scores(race);
+      calculateStep3Finalists(race);
+      updateRaceStatus(race);
+      saveAppState();
+
+      var step1Pass = race.step1.horses.filter(function(h){ return h.judge === '通過'; }).length;
+      var step1Cut = race.step1.horses.filter(function(h){ return h.judge === '消し'; }).length;
+      var step1Hold = race.step1.horses.filter(function(h){ return h.judge === '保留'; }).length;
+
+      var el = document.getElementById('screen-workflow');
+      el.innerHTML = '' +
+        '<h1 class="title">WORKFLOW</h1>' +
+        '<div class="card"><div class="row between"><strong>' + escapeHtml(race.raceName) + '</strong>' + statusBadge(race.status) + '</div>' +
+          '<div class="muted" style="margin-top:4px;">現在ステータス: ' + escapeHtml(statusJa[race.status] || race.status) + '</div>' +
+          buildProgressBarHtml(race) +
+        '</div>' +
+
+        workflowStepCard('step0', 'STEP0 Race Type', '' +
+          '<div class="grid-2"><input id="s0-front-count" type="number" min="0" placeholder="前に行く馬の数" value="' + escapeAttr(race.step0.frontRunnerCount) + '" />' +
+            '<select id="s0-manual-type"><option value="">自動判定を使う</option><option value="スロー">スロー</option><option value="平均">平均</option><option value="ハイ">ハイ</option></select></div>' +
+          '<textarea id="s0-track-bias" placeholder="トラックバイアスメモ">' + escapeHtml(race.step0.trackBiasMemo || '') + '</textarea>' +
+          '<textarea id="s0-note" placeholder="メモ">' + escapeHtml(race.step0.noteMemo || '') + '</textarea>' +
+          '<div class="muted">自動: ' + escapeHtml(autoRaceTypeByCount(race.step0.frontRunnerCount) || '-') + ' / 適用: ' + escapeHtml((race.step0.raceTypeManual || autoRaceTypeByCount(race.step0.frontRunnerCount) || '-')) + '</div>'
+        ) +
+
+        workflowStepCard('step1', 'STEP1 Elimination', '' +
+          '<div class="row wrap"><span class="pill ok">通過 ' + step1Pass + '</span><span class="pill cut">消し ' + step1Cut + '</span><span class="pill hold">保留 ' + step1Hold + '</span></div>' +
+          '<div id="step1-rows"></div>' +
+          '<button id="add-step1-row" style="margin-top:8px;">+ add row</button>'
+        ) +
+
+        workflowStepCard('step2', 'STEP2 Evaluation', '' +
+          '<div id="step2-rows"></div>' +
+          '<button id="add-step2-row" style="margin-top:8px;">+ add row</button>' +
+          '<table class="rank-table"><thead><tr><th>順位</th><th>馬名</th><th>コース</th><th>流れ</th><th>騎手</th><th>合計</th></tr></thead><tbody id="step2-ranking"></tbody></table>'
+        ) +
+
+        workflowStepCard('step3', 'STEP3 Convergence', '' +
+          '<div class="list-item"><div class="muted">自動選出 TOP3</div><strong>' + escapeHtml((race.step3.finalists || []).join(' / ') || '-') + '</strong></div>' +
+          '<div class="list-item"><div class="muted">次点候補</div><strong>' + escapeHtml(race.step3.nextCandidate || '-') + '</strong><div class="muted">' + escapeHtml(race.step3.nextReason || '-') + '</div></div>'
+        ) +
+
+        workflowStepCard('step4', 'STEP4 Decision', '' +
+          '<select id="s4-decision"><option value="">選択してください</option><option value="買う">買う</option><option value="見送り">見送り</option><option value="接戦見送り">接戦見送り</option></select>' +
+          '<textarea id="s4-reason" placeholder="判断理由">' + escapeHtml(race.step4.reason || '') + '</textarea>'
+        ) +
+
+        workflowStepCard('step5', 'STEP5 Bet', '' +
+          '<div class="grid-2"><select id="s5-ticket"><option value="複勝">複勝</option><option value="単勝">単勝</option><option value="馬連">馬連</option><option value="ワイド">ワイド</option></select>' +
+          '<input id="s5-horse" placeholder="馬名" value="' + escapeAttr(race.step5.horseName || '') + '" /></div>' +
+          '<div class="grid-2"><input id="s5-amount" type="number" min="0" value="' + escapeAttr(race.step5.amount || 500) + '" /><input id="s5-note" placeholder="メモ" value="' + escapeAttr(race.step5.note || '') + '" /></div>'
+        ) +
+
+        workflowStepCard('step6', 'STEP6 Review', '' +
+          '<input id="s6-result" placeholder="結果" value="' + escapeAttr(race.step6.result || '') + '" />' +
+          '<textarea id="s6-worked" placeholder="うまくいった点">' + escapeHtml(race.step6.worked || '') + '</textarea>' +
+          '<textarea id="s6-failed" placeholder="失敗点">' + escapeHtml(race.step6.failed || '') + '</textarea>' +
+          '<input id="s6-eval" placeholder="馬券評価" value="' + escapeAttr(race.step6.betEvaluation || '') + '" />' +
+          '<textarea id="s6-next" placeholder="次回メモ">' + escapeHtml(race.step6.nextMemo || '') + '</textarea>'
+        ) +
+
+        '<div class="grid-2"><button id="workflow-back-detail">Detailへ</button><button id="workflow-back-list">Listへ</button></div>';
+
+      var s0sel = document.getElementById('s0-manual-type');
+      s0sel.value = race.step0.raceTypeManual || '';
+      var s4sel = document.getElementById('s4-decision');
+      s4sel.value = race.step4.decision || '';
+      var s5ticket = document.getElementById('s5-ticket');
+      s5ticket.value = race.step5.ticketType || '複勝';
+
+      // Render STEP1 rows
+      var s1rows = document.getElementById('step1-rows');
+      race.step1.horses.forEach(function(h, i){
+        var row = document.createElement('div');
+        row.className = 'horse-row';
+        row.innerHTML = '<div class="grid-2"><input data-s1-name="' + i + '" placeholder="馬名" value="' + escapeAttr(h.horseName || '') + '" />' +
+          '<select data-s1-judge="' + i + '"><option value="通過">通過</option><option value="消し">消し</option><option value="保留">保留</option></select></div>' +
+          '<textarea data-s1-reason="' + i + '" placeholder="理由">' + escapeHtml(h.reason || '') + '</textarea>' +
+          '<button class="danger" data-s1-remove="' + i + '">remove row</button>';
+        s1rows.appendChild(row);
+        row.querySelector('[data-s1-judge="' + i + '"]').value = h.judge || '保留';
+      });
+
+      // Render STEP2 rows
+      var s2rows = document.getElementById('step2-rows');
+      race.step2.horses.forEach(function(h, i){
+        var row = document.createElement('div');
+        row.className = 'horse-row';
+        row.innerHTML = '<input data-s2-name="' + i + '" placeholder="馬名" value="' + escapeAttr(h.horseName || '') + '" />' +
+          '<div class="grid-3" style="margin-top:8px;">' +
+            '<select data-s2-course="' + i + '"><option>◎</option><option>○</option><option>△</option><option>×</option></select>' +
+            '<select data-s2-pace="' + i + '"><option>◎</option><option>○</option><option>△</option><option>×</option></select>' +
+            '<select data-s2-jockey="' + i + '"><option>◎</option><option>○</option><option>△</option><option>×</option></select>' +
+          '</div>' +
+          '<textarea data-s2-comment="' + i + '" placeholder="コメント">' + escapeHtml(h.comment || '') + '</textarea>' +
+          '<button class="danger" data-s2-remove="' + i + '">remove row</button>';
+        s2rows.appendChild(row);
+        row.querySelector('[data-s2-course="' + i + '"]').value = h.courseMark || '△';
+        row.querySelector('[data-s2-pace="' + i + '"]').value = h.paceMark || '△';
+        row.querySelector('[data-s2-jockey="' + i + '"]').value = h.jockeyMark || '△';
+      });
+
+      var rankingBody = document.getElementById('step2-ranking');
+      if (!race.step2.ranking.length) {
+        rankingBody.innerHTML = '<tr><td colspan="6" class="muted">評価データを入力してください</td></tr>';
+      } else {
+        rankingBody.innerHTML = race.step2.ranking.map(function(rk){
+          return '<tr><td>' + rk.rank + '</td><td>' + escapeHtml(rk.horseName) + '</td><td>' + rk.courseMark + ' (' + rk.courseScore + ')</td><td>' + rk.paceMark + ' (' + rk.paceScore + ')</td><td>' + rk.jockeyMark + ' (' + rk.jockeyScore + ')</td><td>' + rk.totalScore + '</td></tr>';
+        }).join('');
+      }
+
+      bindCollapseHandlers();
+      bindWorkflowEvents();
+    }
+
+    function workflowStepCard(key, title, bodyHtml) {
+      var hiddenClass = collapsedSteps[key] ? 'hidden' : '';
+      return '<div class="card">' +
+        '<div class="collapse-head" data-toggle-step="' + key + '"><span>' + title + '</span><button type="button" class="small-btn">' + (collapsedSteps[key] ? '開く' : '閉じる') + '</button></div>' +
+        '<div id="' + key + '-body" class="' + hiddenClass + ' stack">' + bodyHtml + '</div>' +
+      '</div>';
+    }
+
+    function bindCollapseHandlers() {
+      document.querySelectorAll('[data-toggle-step]').forEach(function(head){
+        head.addEventListener('click', function(){
+          var key = head.getAttribute('data-toggle-step');
+          collapsedSteps[key] = !collapsedSteps[key];
+          renderWorkflow();
+        });
+      });
+    }
+
+    function bindWorkflowEvents() {
+      var race = getRaceById(appState.currentRaceId);
+      if (!race) return;
+
+      document.getElementById('workflow-back-detail').addEventListener('click', function(){ showRaceDetail(race.id); });
+      document.getElementById('workflow-back-list').addEventListener('click', showRaceList);
+
+      document.getElementById('add-step1-row').addEventListener('click', addStep1Horse);
+      document.querySelectorAll('[data-s1-remove]').forEach(function(btn){
+        btn.addEventListener('click', function(){ removeStep1Horse(Number(btn.getAttribute('data-s1-remove'))); });
+      });
+      document.querySelectorAll('[data-s1-name]').forEach(function(input){
+        input.addEventListener('input', function(){
+          var i = Number(input.getAttribute('data-s1-name'));
+          race.step1.horses[i].horseName = input.value;
+          updateRaceStatus(race); saveAppState();
+        });
+      });
+      document.querySelectorAll('[data-s1-judge]').forEach(function(sel){
+        sel.addEventListener('change', function(){
+          var i = Number(sel.getAttribute('data-s1-judge'));
+          race.step1.horses[i].judge = sel.value;
+          updateRaceStatus(race); saveAppState(); renderWorkflow();
+        });
+      });
+      document.querySelectorAll('[data-s1-reason]').forEach(function(text){
+        text.addEventListener('input', function(){
+          var i = Number(text.getAttribute('data-s1-reason'));
+          race.step1.horses[i].reason = text.value;
+          updateRaceStatus(race); saveAppState();
+        });
+      });
+
+      document.getElementById('add-step2-row').addEventListener('click', addStep2Horse);
+      document.querySelectorAll('[data-s2-remove]').forEach(function(btn){
+        btn.addEventListener('click', function(){ removeStep2Horse(Number(btn.getAttribute('data-s2-remove'))); });
+      });
+      document.querySelectorAll('[data-s2-name]').forEach(function(input){
+        input.addEventListener('input', function(){
+          var i = Number(input.getAttribute('data-s2-name'));
+          race.step2.horses[i].horseName = input.value;
+          calculateStep2Scores(race); calculateStep3Finalists(race); updateRaceStatus(race); saveAppState(); renderWorkflow();
+        });
+      });
+      [['course','data-s2-course','courseMark'],['pace','data-s2-pace','paceMark'],['jockey','data-s2-jockey','jockeyMark']].forEach(function(conf){
+        document.querySelectorAll('['+conf[1]+']').forEach(function(sel){
+          sel.addEventListener('change', function(){
+            var i = Number(sel.getAttribute(conf[1]));
+            race.step2.horses[i][conf[2]] = sel.value;
+            calculateStep2Scores(race); calculateStep3Finalists(race); updateRaceStatus(race); saveAppState(); renderWorkflow();
+          });
+        });
+      });
+      document.querySelectorAll('[data-s2-comment]').forEach(function(text){
+        text.addEventListener('input', function(){
+          var i = Number(text.getAttribute('data-s2-comment'));
+          race.step2.horses[i].comment = text.value;
+          calculateStep2Scores(race); calculateStep3Finalists(race); updateRaceStatus(race); saveAppState();
+        });
+      });
+
+      document.getElementById('s0-front-count').addEventListener('input', function(e){
+        race.step0.frontRunnerCount = e.target.value === '' ? '' : Number(e.target.value);
+        race.step0.autoRaceType = autoRaceTypeByCount(race.step0.frontRunnerCount);
+        calculateStep3Finalists(race); updateRaceStatus(race); saveAppState(); renderWorkflow();
+      });
+      document.getElementById('s0-manual-type').addEventListener('change', function(e){
+        race.step0.raceTypeManual = e.target.value;
+        race.step0.autoRaceType = autoRaceTypeByCount(race.step0.frontRunnerCount);
+        updateRaceStatus(race); saveAppState(); renderWorkflow();
+      });
+      document.getElementById('s0-track-bias').addEventListener('input', function(e){ race.step0.trackBiasMemo = e.target.value; updateRaceStatus(race); saveAppState(); });
+      document.getElementById('s0-note').addEventListener('input', function(e){ race.step0.noteMemo = e.target.value; updateRaceStatus(race); saveAppState(); });
+
+      document.getElementById('s4-decision').addEventListener('change', function(e){ race.step4.decision = e.target.value; updateRaceStatus(race); saveAppState(); renderWorkflow(); });
+      document.getElementById('s4-reason').addEventListener('input', function(e){ race.step4.reason = e.target.value; updateRaceStatus(race); saveAppState(); });
+
+      document.getElementById('s5-ticket').addEventListener('change', function(e){ race.step5.ticketType = e.target.value; updateRaceStatus(race); saveAppState(); renderWorkflow(); });
+      document.getElementById('s5-horse').addEventListener('input', function(e){ race.step5.horseName = e.target.value; updateRaceStatus(race); saveAppState(); renderWorkflow(); });
+      document.getElementById('s5-amount').addEventListener('input', function(e){ race.step5.amount = Number(e.target.value || 0); updateRaceStatus(race); saveAppState(); renderWorkflow(); });
+      document.getElementById('s5-note').addEventListener('input', function(e){ race.step5.note = e.target.value; updateRaceStatus(race); saveAppState(); });
+
+      document.getElementById('s6-result').addEventListener('input', function(e){ race.step6.result = e.target.value; updateRaceStatus(race); saveAppState(); renderWorkflow(); });
+      document.getElementById('s6-worked').addEventListener('input', function(e){ race.step6.worked = e.target.value; updateRaceStatus(race); saveAppState(); });
+      document.getElementById('s6-failed').addEventListener('input', function(e){ race.step6.failed = e.target.value; updateRaceStatus(race); saveAppState(); });
+      document.getElementById('s6-eval').addEventListener('input', function(e){ race.step6.betEvaluation = e.target.value; updateRaceStatus(race); saveAppState(); renderWorkflow(); });
+      document.getElementById('s6-next').addEventListener('input', function(e){ race.step6.nextMemo = e.target.value; updateRaceStatus(race); saveAppState(); });
+    }
+
+    function bindCommonButtons(container) {
+      container.querySelectorAll('[data-open-detail]').forEach(function(btn){
+        btn.addEventListener('click', function(){ showRaceDetail(btn.getAttribute('data-open-detail')); });
+      });
+      container.querySelectorAll('[data-open-workflow]').forEach(function(btn){
+        btn.addEventListener('click', function(){ showWorkflow(btn.getAttribute('data-open-workflow')); });
+      });
+    }
+
+    function escapeHtml(str) {
+      return String(str == null ? '' : str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+    function escapeAttr(str) { return escapeHtml(str); }
+
+    // Bottom navigation events
+    document.getElementById('nav-home').addEventListener('click', showHome);
+    document.getElementById('nav-list').addEventListener('click', showRaceList);
+    document.getElementById('nav-detail').addEventListener('click', function(){ showRaceDetail(appState.currentRaceId); });
+    document.getElementById('nav-workflow').addEventListener('click', function(){ showWorkflow(appState.currentRaceId); });
+
+    // Boot
+    loadAppState();
+    showHome();
+  </script>
+</body>
+</html>
